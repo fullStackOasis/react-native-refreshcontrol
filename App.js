@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, FlatList } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, FlatList } from 'react-native';
 
 const wait = (timeout) => {
   return new Promise(resolve => setTimeout(resolve, timeout));
