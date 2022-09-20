@@ -1,11 +1,17 @@
 import React from 'react';
-import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text } from 'react-native';
+import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, FlatList } from 'react-native';
 
 const wait = (timeout) => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
 
 const PAGE_INCREMENT = 10;
+
+const Item = ({ item, onPress, backgroundColor, textColor }) => (
+  <TouchableOpacity onPress={onPress} style={[styles.item, backgroundColor]}>
+    <Text style={[styles.title, textColor]}>{item.title}</Text>
+  </TouchableOpacity>
+);
 
 const App = () => {
   const [refreshing, setRefreshing] = React.useState(false);
@@ -20,20 +26,30 @@ const App = () => {
     });
   }, [page]);
 
+  const renderItem = ({ item }) => {
+    const backgroundColor = item.id === selectedId ? "#6e3b6e" : "#f9c2ff";
+    const color = item.id === selectedId ? 'white' : 'black';
+
+    return (
+      <Item
+        item={item}
+        onPress={() => setSelectedId(item.id)}
+        backgroundColor={{ backgroundColor }}
+        textColor={{ color }}
+      />
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
+      <Text>Pull down to see RefreshControl indicator</Text>
+      <Text>{`You are on page ${page}`}</Text>
+      <FlatList
         contentContainerStyle={styles.scrollView}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
-        }
+        onRefresh={onRefresh}
+        refreshing={refreshing}
       >
-        <Text>Pull down to see RefreshControl indicator</Text>
-        <Text>{`You are on page ${page}`}</Text>
-      </ScrollView>
+      </FlatList>
     </SafeAreaView>
   );
 }
@@ -47,6 +63,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'pink',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  item: {
+    padding: 20,
+    marginVertical: 8,
+    marginHorizontal: 16,
   },
 });
 
