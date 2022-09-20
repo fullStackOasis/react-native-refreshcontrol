@@ -3,15 +3,22 @@ import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text } from 'reac
 
 const wait = (timeout) => {
   return new Promise(resolve => setTimeout(resolve, timeout));
-}
+};
+
+const PAGE_INCREMENT = 10;
 
 const App = () => {
   const [refreshing, setRefreshing] = React.useState(false);
+  const [page, setPage] = React.useState(0);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    wait(2000).then(() => setRefreshing(false));
-  }, []);
+    setPage(page + PAGE_INCREMENT);
+    wait(2000).then(() => {
+      console.log("page? " + page);
+      setRefreshing(false);
+    });
+  }, [page]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -25,6 +32,7 @@ const App = () => {
         }
       >
         <Text>Pull down to see RefreshControl indicator</Text>
+        <Text>{`You are on page ${page}`}</Text>
       </ScrollView>
     </SafeAreaView>
   );
