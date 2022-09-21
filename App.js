@@ -1,5 +1,7 @@
-import React from 'react';
-import { SafeAreaView, StyleSheet, Text, FlatList } from 'react-native';
+import React, { useEffect, useState }  from 'react';
+import { SafeAreaView, StyleSheet, Text, FlatList, TouchableOpacity } from 'react-native';
+import { messageRoot } from "./config/myconfig";
+import database from '@react-native-firebase/database';
 
 const wait = (timeout) => {
   return new Promise(resolve => setTimeout(resolve, timeout));
@@ -7,20 +9,55 @@ const wait = (timeout) => {
 
 const PAGE_INCREMENT = 10;
 
-const Item = ({ item, onPress, backgroundColor, textColor }) => (
+/**
+ * Returns a string formatted date for display,
+ * like Thursday January 13 2022 10:58:46 AM
+ * Expects a valid JavaScript time number.
+ */
+ const getNiceDateString = (createdAt) => {
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
+      timeZone: "America/Los_Angeles" };
+  const d = new Date(-createdAt).toLocaleString("en-US", options).toString();
+  const noCommas = d.replace(/,/g, "");
+  return noCommas;
+};
+
+const Item = ({ item, onPress, backgroundColor, textColor }) => {
+  return (
   <TouchableOpacity onPress={onPress} style={[styles.item, backgroundColor]}>
-    <Text style={[styles.title, textColor]}>{item.title}</Text>
+    <Text style={[styles.title, textColor]}>{getNiceDateString(item.createdAt)} {item.content.text}</Text>
   </TouchableOpacity>
-);
+)};
+
+
 
 const App = () => {
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [page, setPage] = React.useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(0);
+  const [data, setData] = useState([]);
+  const [selectedId, setSelectedId] = useState("");
+  useEffect(() => {
+    console.log(messageRoot);
+    const reference = database().ref(messageRoot);
+    reference.orderByChild("createdAt").limitToFirst(3).on('value', snapshot => {
+      const values = snapshot.val();
+      //console.log('User data: ', values);
+      if (values) {
+        const arr = [];
+        Object.keys(values.messages).forEach((message) => {
+          values.messages[message].id = message;
+          arr.push(values.messages[message]);
+        });
+        setData(arr);
+      }
+    });
+  }, []);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
     setPage(page + PAGE_INCREMENT);
-    wait(2000).then(() => {
+    wait(2000).then(() => { // not in use
       console.log("page? " + page);
       setRefreshing(false);
     });
@@ -41,16 +78,18 @@ const App = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text>Pull down to see RefreshControl indicator</Text>
-      <Text>{`You are on page ${page}`}</Text>
-      <FlatList
-        contentContainerStyle={styles.scrollView}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-      >
-      </FlatList>
-    </SafeAreaView>
+      <SafeAreaView style={styles.container}>
+        <Text>Pull down to see RefreshControl indicator</Text>
+        <Text>{`You are on page ${page}`}</Text>
+        <FlatList
+          contentContainerStyle={styles.scrollView}
+          //onRefresh={onRefresh}
+          //refreshing={refreshing}
+          data={data}
+          renderItem={renderItem}
+        >
+        </FlatList>
+      </SafeAreaView>
   );
 }
 
@@ -59,7 +98,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollView: {
-    flex: 1,
     backgroundColor: 'pink',
     alignItems: 'center',
     justifyContent: 'center',
