@@ -26,7 +26,7 @@ const PAGE_INCREMENT = 10;
 const Item = ({ item, onPress, backgroundColor, textColor }) => {
   return (
   <TouchableOpacity onPress={onPress} style={[styles.item, backgroundColor]}>
-    <Text style={[styles.title, textColor]}>{getNiceDateString(item.createdAt)} {item.content.text}</Text>
+    <Text style={[styles.title, textColor]}>{getNiceDateString(item.createdAt)} {item.content?.text}</Text>
   </TouchableOpacity>
 )};
 
@@ -38,19 +38,36 @@ const App = () => {
   const [data, setData] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   useEffect(() => {
-    console.log(messageRoot);
+    // console.log(messageRoot);
     const reference = database().ref(messageRoot);
-    reference.orderByChild("createdAt").limitToFirst(3).on('value', snapshot => {
+    // order by "createdAt" field in each child,
+    // and limit to the first 10 in the result.
+    reference.orderByChild("createdAt")
+      .limitToFirst(10)
+      .once('value', snapshot => {
+      const arr = [];
+      // You have to use snapshot.forEach to keep the ordering,
+      // but if you do that, then you lose the key. Is there some
+      // way to retain the key.
+      snapshot.forEach((msg, i) => {
+        // msg is a DataSnapshot, you must turn it into an Object using .val().
+        const obj = msg.val();
+        arr.push(obj);
+      });
+      setData(arr);
+      /*
+      if you do it this way, then you lose the ordering.
       const values = snapshot.val();
-      //console.log('User data: ', values);
       if (values) {
         const arr = [];
-        Object.keys(values.messages).forEach((message) => {
-          values.messages[message].id = message;
-          arr.push(values.messages[message]);
+        Object.keys(values).forEach((message) => {
+          values[message].id = message;
+          arr.push(values[message]);
         });
+        console.log('User data: ' + arr.length);
         setData(arr);
       }
+      */
     });
   }, []);
 
