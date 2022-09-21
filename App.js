@@ -34,16 +34,18 @@ const Item = ({ item, onPress, backgroundColor, textColor }) => {
 
 const App = () => {
   const [refreshing, setRefreshing] = useState(false);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [data, setData] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   useEffect(() => {
-    // console.log(messageRoot);
+    console.log(messageRoot);
     const reference = database().ref(messageRoot);
     // order by "createdAt" field in each child,
     // and limit to the first 10 in the result.
+    const limit = page * PAGE_INCREMENT;
+    console.log("Limit = " + limit);
     reference.orderByChild("createdAt")
-      .limitToFirst(10)
+      .limitToFirst(limit)
       .once('value', snapshot => {
       const arr = [];
       // You have to use snapshot.forEach to keep the ordering,
@@ -52,7 +54,7 @@ const App = () => {
       snapshot.forEach((msg, i) => {
         // msg is a DataSnapshot, you must turn it into an Object using .val().
         const obj = msg.val();
-        arr.push(obj);
+        arr.unshift(obj);
       });
       setData(arr);
       /*
@@ -69,16 +71,16 @@ const App = () => {
       }
       */
     });
-  }, []);
+  }, [page]);
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = () => {
     setRefreshing(true);
-    setPage(page + PAGE_INCREMENT);
-    wait(2000).then(() => { // not in use
+    setPage(page + 1);
+    wait(1000).then(() => { // not in use
       console.log("page? " + page);
       setRefreshing(false);
     });
-  }, [page]);
+  };
 
   const renderItem = ({ item }) => {
     const backgroundColor = item.id === selectedId ? "#6e3b6e" : "#f9c2ff";
@@ -100,8 +102,8 @@ const App = () => {
         <Text>{`You are on page ${page}`}</Text>
         <FlatList
           contentContainerStyle={styles.scrollView}
-          //onRefresh={onRefresh}
-          //refreshing={refreshing}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
           data={data}
           renderItem={renderItem}
         >
